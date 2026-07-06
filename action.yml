@@ -1,0 +1,10 @@
+---
+name: "Contributors Action"
+author: "github"
+description: "A GitHub Action to report out contributors and contributions to a repository or organization"
+runs:
+  using: "docker"
+  image: "docker://ghcr.io/github-community-projects/contributors@sha256:8891b833aca32ce26fc88ec563ebc74c6113788fd7a41b4eab6a57c56998e2a4" # v2
+branding:
+  icon: "users"
+  color: "green"
