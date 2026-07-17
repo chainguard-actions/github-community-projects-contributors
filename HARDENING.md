@@ -1,6 +1,6 @@
 <!-- markdownlint-disable -->
 
-# Hardening Report: github-community-projects--contributors--/v2.0.18
+# Hardening Report: github-community-projects--contributors/v2.0.18
 
 > This file was generated automatically by the hardening agent.
 
@@ -8,15 +8,15 @@
 
 **Test Policy SHA:** `843adf9e4b8f85d0c08b27b9d0b09dd094b54702`
 
-**Harden Agent Version:** `1`
+**Harden Agent Version:** `2`
 
-Action **github-community-projects--contributors--/v2.0.18** was hardened automatically. 2 finding(s) were identified and resolved across 1 iteration(s).
+Action **github-community-projects--contributors/v2.0.18** was hardened automatically. 2 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### unpinned-uses (severity: high)
 
-The action.yml uses a Docker image with a mutable tag `:v2` instead of a SHA digest. The reference `docker://ghcr.io/github-community-projects/contributors:v2` can be silently updated to point to a different (potentially malicious) image without any change to the action definition. It should be pinned to a specific SHA digest, e.g. `docker://ghcr.io/github-community-projects/contributors@sha256:<64-hex-char-digest>`.
+The action.yml Docker image reference uses a mutable version tag (`v2`) instead of an immutable SHA digest. This means the action could silently pull a different (potentially malicious) image on future runs if the tag is moved. The reference `docker://ghcr.io/github-community-projects/contributors:v2` should be replaced with a SHA-pinned form such as `docker://ghcr.io/github-community-projects/contributors@sha256:<64-hex-char-digest>`.
 
 Locations:
 
@@ -24,12 +24,14 @@ Locations:
 
 ### script-injection (severity: high)
 
-Two `run:` steps in python-ci.yml directly interpolate `${{ matrix.python-version }}` into shell commands (sub-rule a). Although the matrix values are hardcoded literals in this workflow, the `${{ ... }}` template substitution happens before the shell processes the string, meaning any special characters in the value would be interpreted by the shell before quoting can occur. The safe pattern is to pass the value via an `env:` variable and reference it as a quoted `"$ENV_VAR"` in the shell script. Offending lines: `run: uv python install ${{ matrix.python-version }}` and `run: uv sync --frozen --python ${{ matrix.python-version }}`.
+Sub-rule (a): `${{ matrix.python-version }}` is interpolated directly inside `run:` shell command strings in python-ci.yml. Although `matrix.*` values are defined in the same workflow file, they still flow through YAML template substitution before the shell sees them — any special shell characters in the value would be interpreted by the shell. The value should be passed via an `env:` variable and referenced as a quoted shell variable (e.g. `"$PYTHON_VERSION"`) instead. Offending lines:
+- `run: uv python install ${{ matrix.python-version }}`
+- `run: uv sync --frozen --python ${{ matrix.python-version }}`
 
 Locations:
 
-- `.github/workflows/python-ci.yml:35`
-- `.github/workflows/python-ci.yml:37`
+- `.github/workflows/python-ci.yml:40`
+- `.github/workflows/python-ci.yml:42`
 
 ## Iteration Notes
 
@@ -39,5 +41,5 @@ Locations:
 
 **Notes:**
 
-1. action.yml: Pinned the Docker image from mutable tag 'docker://ghcr.io/github-community-projects/contributors:v2' to immutable digest 'docker://ghcr.io/github-community-projects/contributors@sha256:8891b833aca32ce26fc88ec563ebc74c6113788fd7a41b4eab6a57c56998e2a4' with a # v2 comment for readability. 2. .github/workflows/python-ci.yml: Fixed two script injection instances by moving ${{ matrix.python-version }} out of run: shell strings into env: blocks as PYTHON_VERSION, then referencing it as "$PYTHON_VERSION" in the shell commands for both 'uv python install' and 'uv sync --frozen --python' steps.
+1. action.yml: Pinned the Docker image reference from `docker://ghcr.io/github-community-projects/contributors:v2` to `docker://ghcr.io/github-community-projects/contributors:v2@sha256:8891b833aca32ce26fc88ec563ebc74c6113788fd7a41b4eab6a57c56998e2a4`, preserving the docker:// scheme and tag inline. 2. python-ci.yml: Fixed two script injection instances by moving `${{ matrix.python-version }}` out of `run:` shell strings into `env:` blocks as `PYTHON_VERSION`, then referencing it as `"$PYTHON_VERSION"` in the shell commands.
 

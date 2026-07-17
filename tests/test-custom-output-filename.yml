@@ -1,0 +1,46 @@
+name: Test custom output filename
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run contributors action with custom output filename
+        uses: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: github-community-projects/contributors
+          OUTPUT_FILENAME: "my-contributors.md"
+
+      - name: Assert custom output file was created
+        run: |
+          echo "Checking for my-contributors.md output file..."
+          if [ ! -f "my-contributors.md" ]; then
+            echo "FAIL: my-contributors.md was not created"
+            ls -la *.md 2>/dev/null || echo "No .md files found"
+            exit 1
+          fi
+          echo "PASS: my-contributors.md exists"
+
+      - name: Assert default output file was NOT created
+        run: |
+          echo "Checking that default contributors.md was NOT created..."
+          if [ -f "contributors.md" ]; then
+            echo "FAIL: default contributors.md was created when OUTPUT_FILENAME was set"
+            exit 1
+          fi
+          echo "PASS: default contributors.md was not created"
+
+      - name: Assert custom output file has content
+        run: |
+          echo "Content of my-contributors.md:"
+          cat my-contributors.md
+          CONTENT=$(cat my-contributors.md)
+          if [ -z "$CONTENT" ]; then
+            echo "FAIL: my-contributors.md is empty"
+            exit 1
+          fi
+          echo "PASS: my-contributors.md has content"

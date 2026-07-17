@@ -1,0 +1,47 @@
+name: Test date range filtering
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run contributors action with date range
+        uses: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: github-community-projects/contributors
+          START_DATE: "2023-01-01"
+          END_DATE: "2023-12-31"
+
+      - name: Assert output file was created
+        run: |
+          echo "Checking for contributors.md output file..."
+          if [ ! -f "contributors.md" ]; then
+            echo "FAIL: contributors.md was not created"
+            exit 1
+          fi
+          echo "PASS: contributors.md exists"
+
+      - name: Assert output file has content
+        run: |
+          echo "Content of contributors.md:"
+          cat contributors.md
+          CONTENT=$(cat contributors.md)
+          if [ -z "$CONTENT" ]; then
+            echo "FAIL: contributors.md is empty"
+            exit 1
+          fi
+          echo "PASS: contributors.md has content"
+
+      - name: Assert date range is reflected in output
+        run: |
+          echo "Checking for date range in output..."
+          if ! grep -q "2023" contributors.md; then
+            echo "FAIL: date range (2023) not found in contributors.md"
+            cat contributors.md
+            exit 1
+          fi
+          echo "PASS: date range found in output"

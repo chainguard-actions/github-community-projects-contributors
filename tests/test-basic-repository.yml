@@ -1,0 +1,46 @@
+name: Test basic repository usage
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run contributors action on a single repository
+        uses: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: github-community-projects/contributors
+
+      - name: Assert output file was created
+        run: |
+          echo "Checking for contributors.md output file..."
+          if [ ! -f "contributors.md" ]; then
+            echo "FAIL: contributors.md was not created"
+            exit 1
+          fi
+          echo "PASS: contributors.md exists"
+
+      - name: Assert output file has content
+        run: |
+          echo "Checking contributors.md has content..."
+          CONTENT=$(cat contributors.md)
+          echo "Content preview:"
+          head -20 contributors.md
+          if [ -z "$CONTENT" ]; then
+            echo "FAIL: contributors.md is empty"
+            exit 1
+          fi
+          echo "PASS: contributors.md has content"
+
+      - name: Assert output file contains expected markdown structure
+        run: |
+          echo "Checking for expected markdown structure..."
+          if ! grep -qi "contributor" contributors.md; then
+            echo "FAIL: contributors.md does not contain 'contributor'"
+            cat contributors.md
+            exit 1
+          fi
+          echo "PASS: contributors.md contains expected content"
