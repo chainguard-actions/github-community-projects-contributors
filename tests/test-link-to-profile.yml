@@ -1,0 +1,37 @@
+name: Test link to profile option
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: github-community-projects/contributors
+          LINK_TO_PROFILE: "True"
+          OUTPUT_FILENAME: contributors-linked.md
+
+      - name: Assert output file was created
+        run: |
+          echo "Checking for contributors-linked.md..."
+          if [ ! -f "$GITHUB_WORKSPACE/contributors-linked.md" ]; then
+            echo "FAIL: contributors-linked.md was not created"
+            exit 1
+          fi
+          echo "PASS: contributors-linked.md exists"
+
+      - name: Assert output file contains GitHub profile links
+        run: |
+          echo "Checking content of contributors-linked.md..."
+          cat "$GITHUB_WORKSPACE/contributors-linked.md"
+          # When LINK_TO_PROFILE is True, usernames should be linked to GitHub profiles
+          if ! grep -q "github.com" "$GITHUB_WORKSPACE/contributors-linked.md"; then
+            echo "FAIL: contributors-linked.md does not contain GitHub profile links"
+            exit 1
+          fi
+          echo "PASS: contributors-linked.md contains GitHub profile links"
