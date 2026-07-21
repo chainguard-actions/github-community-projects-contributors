@@ -8,6 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
+| v2.0.17 | [`v2.0.17`](https://github.com/chainguard-actions/github-community-projects-contributors/tree/v2.0.17) | [`b518e14`](https://github.com/github-community-projects/contributors/commit/b518e14609eadf468470392201312777172b5dec) |
 | v2.0.18 | [`v2.0.18`](https://github.com/chainguard-actions/github-community-projects-contributors/tree/v2.0.18) | [`7e07777`](https://github.com/github-community-projects/contributors/commit/7e077779e5e7bf810cc722e15b38ee63f86b880e) |
 
 ## Privacy
