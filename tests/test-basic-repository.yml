@@ -1,0 +1,36 @@
+name: Test basic repository contributor report
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run contributors action on a single repository
+        id: action
+        uses: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: github-community-projects/contributors
+          OUTPUT_FILENAME: contributors.md
+
+      - name: Assert output file was created
+        run: |
+          echo "Checking for contributors.md output file..."
+          if [ ! -f "$GITHUB_WORKSPACE/contributors.md" ]; then
+            echo "FAIL: contributors.md output file was not created"
+            exit 1
+          fi
+          echo "PASS: contributors.md file exists"
+
+      - name: Assert output file contains contributor data
+        run: |
+          echo "Checking contents of contributors.md..."
+          cat "$GITHUB_WORKSPACE/contributors.md"
+          if ! grep -qi "contributor" "$GITHUB_WORKSPACE/contributors.md"; then
+            echo "FAIL: contributors.md does not contain expected 'contributor' content"
+            exit 1
+          fi
+          echo "PASS: contributors.md contains contributor data"

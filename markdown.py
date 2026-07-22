@@ -1,0 +1,294 @@
+# pylint: disable=too-many-locals
+"""This module contains the functions needed to write the output to markdown files."""
+
+import os
+
+
+def _is_truthy(value) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() == "true"
+    return value is True
+
+
+def write_to_markdown(
+    collaborators,
+    filename,
+    start_date,
+    end_date,
+    organization,
+    repository,
+    sponsor_info,
+    link_to_profile,
+    ghe,
+    show_avatar=False,
+):
+    """
+    This function writes a list of collaborators to a markdown file in table format
+    and optionally to GitHub Actions Job Summary if running in a GitHub Actions environment.
+    Each collaborator is represented as a dictionary with keys 'username',
+    'contribution_count', 'new_contributor', and 'commits'.
+
+    Args:
+        collaborators (list): A list of dictionaries, where each dictionary
+                              represents a collaborator. Each dictionary should
+                              have the keys 'username', 'contribution_count',
+                              and 'commits'.
+        filename (str): The path of the markdown file to which the table will
+                        be written.
+        start_date (str): The start date of the date range for the contributor
+                          list.
+        end_date (str): The end date of the date range for the contributor list.
+        organization (str): The organization for which the contributors are
+                            being listed.
+        repository (str): The repository for which the contributors are being
+                          listed.
+        sponsor_info (str): True if the user wants the sponsor_url shown in
+                            the report
+        link_to_profile (str): True if the user wants the username linked to
+                               Github profile in the report
+        ghe (str): The GitHub Enterprise instance URL, if applicable.
+        show_avatar (str): True if the user wants to show profile images in
+                            the report
+
+    Returns:
+        None
+
+    """
+    # Put together the contributor table
+    table, total_contributions = get_contributor_table(
+        collaborators,
+        start_date,
+        end_date,
+        organization,
+        repository,
+        sponsor_info,
+        link_to_profile,
+        ghe,
+        show_avatar,
+    )
+
+    # Put together the summary table including # of new contributions,
+    # # of new contributors, % new contributors, % returning contributors
+    summary_table = get_summary_table(
+        collaborators, start_date, end_date, total_contributions
+    )
+
+    # Generate the markdown content once
+    content = generate_markdown_content(
+        start_date, end_date, organization, repository, table, summary_table
+    )
+
+    # Write the markdown file
+    write_markdown_file(filename, content)
+
+    # Also write to GitHub Actions Step Summary if available
+    write_to_github_summary(content)
+
+
+def write_to_github_summary(content):
+    """
+    Write markdown content to GitHub Actions Step Summary.
+
+    Args:
+        content (str): The pre-generated markdown content to write.
+
+    Returns:
+        None
+    """
+    # Only write to GitHub Step Summary if we're running in a GitHub Actions
+    # environment
+    github_step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if github_step_summary:
+        with open(github_step_summary, "a", encoding="utf-8") as summary_file:
+            summary_file.write(content)
+
+
+def generate_markdown_content(
+    start_date, end_date, organization, repository, table, summary_table
+):
+    """
+    This function generates markdown content as a string.
+
+    Args:
+        start_date (str): The start date of the date range for the contributor
+                          list.
+        end_date (str): The end date of the date range for the contributor list.
+        organization (str): The organization for which the contributors are
+                            being listed.
+        repository (str): The repository for which the contributors are being
+                          listed.
+        table (str): A string containing a markdown table of the contributors
+                     and the total contribution count.
+        summary_table (str): A string containing a markdown table of the
+                             summary statistics.
+
+    Returns:
+        str: The complete markdown content as a string.
+
+    """
+    content = "# Contributors\n\n"
+    if start_date and end_date:
+        content += f"- Date range for contributor list:  {start_date} to {end_date}\n"
+    if organization:
+        content += f"- Organization: {organization}\n"
+    if repository:
+        content += f"- Repository: {repository}\n"
+    content += "\n"
+    content += summary_table
+    content += table
+    content += (
+        "\n _this file was generated by the "
+        "[Contributors GitHub Action]"
+        "(https://github.com/github-community-projects/contributors)_\n"
+    )
+    return content
+
+
+def write_markdown_file(filename, content):
+    """
+    This function writes the pre-generated markdown content to a file.
+
+    Args:
+        filename (str): The path of the markdown file to which the content will
+                        be written.
+        content (str): The pre-generated markdown content to write.
+
+    Returns:
+        None
+
+    """
+    with open(filename, "w", encoding="utf-8") as markdown_file:
+        markdown_file.write(content)
+
+
+def get_summary_table(collaborators, start_date, end_date, total_contributions):
+    """
+    This function returns a string containing a markdown table of the summary statistics.
+
+    Args:
+        collaborators (list): A list of dictionaries, where each dictionary represents a collaborator.
+                              Each dictionary should have the keys 'username', 'contribution_count', and 'commits'.
+        start_date (str): The start date of the date range for the contributor list.
+        end_date (str): The end date of the date range for the contributor list.
+        total_contributions (int): The total number of contributions made by all of the contributors.
+
+    Returns:
+        summary_table (str): A string containing a markdown table of the summary statistics.
+
+    """
+    if start_date and end_date:
+        summary_table = "| Total Contributors | Total Contributions | % New Contributors |\n| --- | --- | --- |\n"
+        if len(collaborators) > 0:
+            new_contributors_percentage = round(
+                (len([x for x in collaborators if x.new_contributor is True]))
+                / len(collaborators)
+                * 100,
+                2,
+            )
+        else:
+            new_contributors_percentage = 0
+        summary_table += f"| {str(len(collaborators))} | {str(total_contributions)} | {str(new_contributors_percentage)}% |\n\n"
+    else:
+        summary_table = "| Total Contributors | Total Contributions |\n| --- | --- |\n"
+        summary_table += (
+            f"| {str(len(collaborators))}  | {str(total_contributions)}  |\n\n"
+        )
+
+    return summary_table
+
+
+def get_contributor_table(
+    collaborators,
+    start_date,
+    end_date,
+    organization,
+    repository,
+    sponsor_info,
+    link_to_profile,
+    ghe,
+    show_avatar=False,
+):
+    """
+    This function returns a string containing a markdown table of the contributors and the total contribution count.
+
+    Args:
+        collaborators (list): A list of dictionaries, where each dictionary represents a collaborator.
+                              Each dictionary should have the keys 'username', 'contribution_count', and 'commits'.
+        start_date (str): The start date of the date range for the contributor list.
+        end_date (str): The end date of the date range for the contributor list.
+        organization (str): The organization for which the contributors are being listed.
+        repository (str): The repository for which the contributors are being listed.
+        sponsor_info (str): True if the user wants the sponsor_url shown in the report
+        link_to_profile (str): True if the user wants the username linked to Github profile in the report
+        show_avatar (str): True if the user wants to show profile images in the report
+
+    Returns:
+        table (str): A string containing a markdown table of the contributors and the total contribution count.
+        total_contributions (int): The total number of contributions made by all of the contributors.
+
+    """
+    sponsor_info = _is_truthy(sponsor_info)
+    show_avatar = _is_truthy(show_avatar)
+    link_to_profile = _is_truthy(link_to_profile)
+    if start_date and end_date:
+        columns = ["Username", "Contribution Count"]
+    else:
+        columns = ["Username", "All Time Contribution Count"]
+    if show_avatar:
+        columns.insert(0, "Avatar")
+    if start_date and end_date:
+        columns += ["New Contributor"]
+    if sponsor_info:
+        columns += ["Sponsor URL"]
+    if start_date and end_date:
+        columns += [f"Commits between {start_date} and {end_date}"]
+    else:
+        columns += ["All Commits"]
+
+    headers = "| " + " | ".join(columns) + " |\n"
+    headers += "| " + " | ".join(["---"] * len(columns)) + " |\n"
+
+    table = headers
+    total_contributions = 0
+
+    for collaborator in collaborators:
+        total_contributions += collaborator.contribution_count
+        username = collaborator.username
+        contribution_count = collaborator.contribution_count
+        if repository:
+            commit_urls = collaborator.commit_url
+        if organization:
+            # split the urls from the comma separated list and make them into markdown links
+            commit_url_list = collaborator.commit_url.split(",")
+            commit_urls = ""
+            for url in commit_url_list:
+                url = url.strip()
+                # get the organization and repository name from the url ie. org1/repo2 from https://github.com/org1/repo2/commits?author-zkoppert
+                endpoint = ghe.removeprefix("https://") if ghe else "github.com"
+                org_repo_link_name = url.split("/commits")[0].split(f"{endpoint}/")[1]
+                url = f"[{org_repo_link_name}]({url})"
+                commit_urls += f"{url}, "
+        new_contributor = collaborator.new_contributor
+
+        row = "| "
+        if show_avatar:
+            avatar_cell = (
+                f'<img src="{collaborator.avatar_url}" width="32" height="32" />'
+                if collaborator.avatar_url
+                else ""
+            )
+            row += f"{avatar_cell} | "
+        row += (
+            f"{'' if not link_to_profile else '@'}{username} | {contribution_count} |"
+        )
+        if "New Contributor" in columns:
+            row += f" {new_contributor} |"
+        if "Sponsor URL" in columns:
+            if collaborator.sponsor_info == "":
+                row += " not sponsorable |"
+            else:
+                row += f" [Sponsor Link]({collaborator.sponsor_info}) |"
+        row += f" {commit_urls} |\n"
+
+        table += row
+    return table, total_contributions
