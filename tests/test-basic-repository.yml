@@ -1,0 +1,49 @@
+name: Test basic repository contributor report
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run contributors action on a known repository
+        id: action
+        uses: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: actions/checkout
+          OUTPUT_FILENAME: contributors.md
+
+      - name: Assert output file was created
+        run: |
+          echo "Checking for contributors.md..."
+          if [ ! -f "$GITHUB_WORKSPACE/contributors.md" ]; then
+            echo "FAIL: contributors.md was not created"
+            exit 1
+          fi
+          echo "PASS: contributors.md exists"
+
+      - name: Assert output file has expected content
+        run: |
+          echo "Contents of contributors.md:"
+          cat "$GITHUB_WORKSPACE/contributors.md"
+          echo "---"
+          # The file should contain a Contributors header
+          if ! grep -qi "contributor" "$GITHUB_WORKSPACE/contributors.md"; then
+            echo "FAIL: contributors.md does not contain 'contributor'"
+            exit 1
+          fi
+          echo "PASS: contributors.md contains expected content"
+
+      - name: Assert JSON output file was created
+        run: |
+          echo "Checking for contributors.json..."
+          if [ ! -f "$GITHUB_WORKSPACE/contributors.json" ]; then
+            echo "FAIL: contributors.json was not created"
+            exit 1
+          fi
+          echo "PASS: contributors.json exists"
+          echo "Contents of contributors.json:"
+          cat "$GITHUB_WORKSPACE/contributors.json"

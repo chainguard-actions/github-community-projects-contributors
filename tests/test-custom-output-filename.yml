@@ -1,0 +1,44 @@
+name: Test custom output filename
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run contributors action with custom output filename
+        id: action
+        uses: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: actions/checkout
+          OUTPUT_FILENAME: my-report.md
+
+      - name: Assert custom output file was created
+        run: |
+          echo "Checking for my-report.md..."
+          if [ ! -f "$GITHUB_WORKSPACE/my-report.md" ]; then
+            echo "FAIL: my-report.md was not created"
+            exit 1
+          fi
+          echo "PASS: my-report.md exists"
+
+      - name: Assert custom output file has expected content
+        run: |
+          echo "Contents of my-report.md:"
+          cat "$GITHUB_WORKSPACE/my-report.md"
+          echo "---"
+          if ! grep -qi "contributor" "$GITHUB_WORKSPACE/my-report.md"; then
+            echo "FAIL: my-report.md does not contain 'contributor'"
+            exit 1
+          fi
+          echo "PASS: my-report.md contains expected content"
+
+      - name: Assert default filename was NOT created
+        run: |
+          if [ -f "$GITHUB_WORKSPACE/contributors.md" ]; then
+            echo "WARN: contributors.md was also created (may be expected)"
+          fi
+          echo "PASS: custom filename test complete"

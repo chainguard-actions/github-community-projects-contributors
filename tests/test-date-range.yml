@@ -1,0 +1,54 @@
+name: Test contributor report with date range
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run contributors action with date range
+        id: action
+        uses: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: actions/checkout
+          START_DATE: "2023-01-01"
+          END_DATE: "2023-12-31"
+          OUTPUT_FILENAME: contributors-dated.md
+
+      - name: Assert dated output file was created
+        run: |
+          echo "Checking for contributors-dated.md..."
+          if [ ! -f "$GITHUB_WORKSPACE/contributors-dated.md" ]; then
+            echo "FAIL: contributors-dated.md was not created"
+            exit 1
+          fi
+          echo "PASS: contributors-dated.md exists"
+
+      - name: Assert dated output file contains date range info
+        run: |
+          echo "Contents of contributors-dated.md:"
+          cat "$GITHUB_WORKSPACE/contributors-dated.md"
+          echo "---"
+          # The file should mention the date range
+          if ! grep -q "2023" "$GITHUB_WORKSPACE/contributors-dated.md"; then
+            echo "FAIL: contributors-dated.md does not contain the year 2023"
+            exit 1
+          fi
+          echo "PASS: contributors-dated.md contains date range information"
+
+      - name: Assert JSON output was created
+        run: |
+          if [ ! -f "$GITHUB_WORKSPACE/contributors.json" ]; then
+            echo "FAIL: contributors.json was not created"
+            exit 1
+          fi
+          echo "PASS: contributors.json exists"
+          # Verify JSON contains date range
+          if ! grep -q "2023" "$GITHUB_WORKSPACE/contributors.json"; then
+            echo "FAIL: contributors.json does not contain the year 2023"
+            exit 1
+          fi
+          echo "PASS: contributors.json contains date range"
