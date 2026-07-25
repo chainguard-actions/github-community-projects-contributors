@@ -12,6 +12,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v2.0.13 | [`v2.0.13`](https://github.com/chainguard-actions/github-community-projects-contributors/tree/v2.0.13) | [`4eab98a`](https://github.com/github-community-projects/contributors/commit/4eab98ab9b02adf4257e9fc1cdfd658e48f52bbd) |
 | v2.0.14 | [`v2.0.14`](https://github.com/chainguard-actions/github-community-projects-contributors/tree/v2.0.14) | [`e9d8398`](https://github.com/github-community-projects/contributors/commit/e9d839820fc725f6e2f21a2976904889dc30c9c6) |
 | v2.0.15 | [`v2.0.15`](https://github.com/chainguard-actions/github-community-projects-contributors/tree/v2.0.15) | [`4fda46a`](https://github.com/github-community-projects/contributors/commit/4fda46a62ca1f1f1162c053c11d9576ae0cdda99) |
+| v2.0.16 | [`v2.0.16`](https://github.com/chainguard-actions/github-community-projects-contributors/tree/v2.0.16) | [`cc2aed6`](https://github.com/github-community-projects/contributors/commit/cc2aed69181e7633fa88a0d4303101738e7f4cab) |
 | v2.0.17 | [`v2.0.17`](https://github.com/chainguard-actions/github-community-projects-contributors/tree/v2.0.17) | [`b518e14`](https://github.com/github-community-projects/contributors/commit/b518e14609eadf468470392201312777172b5dec) |
 | v2.0.18 | [`v2.0.18`](https://github.com/chainguard-actions/github-community-projects-contributors/tree/v2.0.18) | [`7e07777`](https://github.com/github-community-projects/contributors/commit/7e077779e5e7bf810cc722e15b38ee63f86b880e) |
 
