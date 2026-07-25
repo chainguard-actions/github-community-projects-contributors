@@ -1,0 +1,5 @@
+{
+  "threshold": 50,
+  "ignore": ["test*", "**/.venv/**"],
+  "absolute": true
+}
